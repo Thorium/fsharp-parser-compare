@@ -1,0 +1,13 @@
+{
+  "name": "fsharp-parser-compare",
+  "version": "1.0.0",
+  "private": true,
+  "description": "Side-by-side comparison of the ionide and MangelMaxime F# tree-sitter grammars, in the browser",
+  "scripts": {
+    "start": "node server.js"
+  },
+  "type": "commonjs",
+  "dependencies": {
+    "web-tree-sitter": "^0.26.11"
+  }
+}
