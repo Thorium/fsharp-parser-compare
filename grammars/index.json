@@ -1,0 +1,36 @@
+{
+  "$comment": "Grammar variants. Paths are relative to this file; a value starting with http(s):// is fetched from that URL instead. Manage with: node scripts/variant.mjs",
+  "default": [
+    "ionide-main",
+    "maxim-main"
+  ],
+  "variants": [
+    {
+      "id": "ionide-main",
+      "label": "ionide",
+      "version": "main @ 0d3ccbb (2026-08-07)",
+      "repo": "https://github.com/ionide/tree-sitter-fsharp",
+      "wasm": "ionide-main/parser.wasm",
+      "highlights": "ionide-main/highlights.scm",
+      "tags": "ionide-main/tags.scm"
+    },
+    {
+      "id": "ionide-npm-latest",
+      "label": "ionide (npm latest)",
+      "version": "whatever is published as latest, resolved at load time",
+      "repo": "https://github.com/ionide/tree-sitter-fsharp",
+      "wasm": "https://unpkg.com/tree-sitter-fsharp@latest/tree-sitter-fsharp.wasm",
+      "highlights": "https://unpkg.com/tree-sitter-fsharp@latest/queries/highlights.scm",
+      "tags": "https://unpkg.com/tree-sitter-fsharp@latest/queries/tags.scm"
+    },
+    {
+      "id": "maxim-main",
+      "label": "maxim",
+      "version": "main @ 433ada2 (2026-09-02)",
+      "repo": "https://github.com/MangelMaxime/tree-sitter-fsharp",
+      "wasm": "maxim-main/parser.wasm",
+      "highlights": "maxim-main/highlights.scm",
+      "tags": "maxim-main/tags.scm"
+    }
+  ]
+}

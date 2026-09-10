@@ -1,1 +1,6 @@
 node_modules/
+# scripts/variant.mjs clones remote repos here when building a variant
+.cache/
+# the tree-sitter CLI installer writes here if run from the project root
+/tree-sitter.exe
+/tree-sitter

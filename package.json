@@ -9,5 +9,8 @@
   "type": "commonjs",
   "dependencies": {
     "web-tree-sitter": "^0.26.11"
+  },
+  "devDependencies": {
+    "tree-sitter-cli": "^0.26.11"
   }
 }

@@ -3,16 +3,15 @@
 <head>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
-<title>F# grammar A/B — ionide vs MangelMaxime</title>
+<title>F# tree-sitter grammar A/B</title>
 <link rel="stylesheet" href="style.css">
 </head>
 <body>
 <header>
   <h1>F# tree-sitter grammars, side by side</h1>
   <p class="sub">
-    <span class="tag tag-i">ionide/tree-sitter-fsharp</span> <code id="ver-ionide">…</code>
-    <span class="tag tag-m">MangelMaxime/tree-sitter-fsharp</span> <code id="ver-maxim">…</code>
-    — both compiled to WASM with tree-sitter CLI 0.26.11. Hover a token for its node chain,
+    Parse one source with two grammars at once — two repos, two versions of the same repo,
+    or a published build against your local one. Hover a token for its node chain,
     highlight capture and <code>tags.scm</code> definition.
   </p>
 </header>
@@ -23,34 +22,87 @@
     <span id="fname" class="fname">…</span>
     <span class="spacer"></span>
     <label class="chk"><input type="checkbox" id="sync" checked> sync scroll</label>
+    <button id="opts-toggle" class="ghost" aria-expanded="false">⚙ Grammars</button>
     <button id="theme" class="ghost" title="Light / dark / follow system">◐ system</button>
-    <span id="status" class="status">loading grammars…</span>
+    <span id="status" class="status">loading…</span>
   </div>
+
+  <div id="opts" hidden>
+    <div class="opts-grid">
+      <div class="slot-cfg" data-slot="A">
+        <div class="slot-title"><span class="tag tag-A">A</span> left pane</div>
+        <label class="fld"><span>variant</span><select id="pick-A"></select></label>
+        <div class="meta" id="meta-A"></div>
+        <div class="ovr">
+          <div class="ovr-row">
+            <label class="file-btn sm">parser.wasm…<input type="file" data-slot="A" data-part="wasm" accept=".wasm"></label>
+            <span class="ovr-name" id="ovr-A-wasm">from variant</span>
+          </div>
+          <div class="ovr-row">
+            <label class="file-btn sm">highlights.scm…<input type="file" data-slot="A" data-part="highlights" accept=".scm"></label>
+            <span class="ovr-name" id="ovr-A-highlights">from variant</span>
+          </div>
+          <div class="ovr-row">
+            <label class="file-btn sm">tags.scm…<input type="file" data-slot="A" data-part="tags" accept=".scm"></label>
+            <span class="ovr-name" id="ovr-A-tags">from variant</span>
+          </div>
+          <button class="ghost sm" data-reset="A">clear overrides</button>
+        </div>
+      </div>
+
+      <div class="slot-cfg" data-slot="B">
+        <div class="slot-title"><span class="tag tag-B">B</span> right pane</div>
+        <label class="fld"><span>variant</span><select id="pick-B"></select></label>
+        <div class="meta" id="meta-B"></div>
+        <div class="ovr">
+          <div class="ovr-row">
+            <label class="file-btn sm">parser.wasm…<input type="file" data-slot="B" data-part="wasm" accept=".wasm"></label>
+            <span class="ovr-name" id="ovr-B-wasm">from variant</span>
+          </div>
+          <div class="ovr-row">
+            <label class="file-btn sm">highlights.scm…<input type="file" data-slot="B" data-part="highlights" accept=".scm"></label>
+            <span class="ovr-name" id="ovr-B-highlights">from variant</span>
+          </div>
+          <div class="ovr-row">
+            <label class="file-btn sm">tags.scm…<input type="file" data-slot="B" data-part="tags" accept=".scm"></label>
+            <span class="ovr-name" id="ovr-B-tags">from variant</span>
+          </div>
+          <button class="ghost sm" data-reset="B">clear overrides</button>
+        </div>
+      </div>
+    </div>
+    <p class="opts-note">
+      Overrides are read from your machine and never uploaded — drop in a freshly built
+      <code>parser.wasm</code> or an edited <code>.scm</code> to A/B it against anything in the list.
+      To add a variant permanently: <code>node scripts/variant.mjs build --id &lt;name&gt; --repo &lt;url|path&gt; --ref &lt;tag&gt;</code>.
+    </p>
+  </div>
+
   <textarea id="src" spellcheck="false" autocomplete="off"></textarea>
 </section>
 
 <section id="panes">
-  <div class="pane" data-id="ionide">
+  <div class="pane" data-id="A">
     <div class="pane-head">
-      <span class="tag tag-i">ionide</span>
-      <span class="stats" id="stats-ionide"></span>
+      <span class="tag tag-A" id="name-A">A</span>
+      <span class="stats" id="stats-A"></span>
       <span class="spacer"></span>
-      <div class="tabs" data-for="ionide">
+      <div class="tabs" data-for="A">
         <button class="on" data-view="hl">Highlight</button><button data-view="tree">Tree</button><button data-view="err">Errors</button>
       </div>
     </div>
-    <div class="pane-body" data-id="ionide"><pre id="out-ionide" class="out"></pre></div>
+    <div class="pane-body" data-id="A"><pre id="out-A" class="out"></pre></div>
   </div>
-  <div class="pane" data-id="maxim">
+  <div class="pane" data-id="B">
     <div class="pane-head">
-      <span class="tag tag-m">maxim</span>
-      <span class="stats" id="stats-maxim"></span>
+      <span class="tag tag-B" id="name-B">B</span>
+      <span class="stats" id="stats-B"></span>
       <span class="spacer"></span>
-      <div class="tabs" data-for="maxim">
+      <div class="tabs" data-for="B">
         <button class="on" data-view="hl">Highlight</button><button data-view="tree">Tree</button><button data-view="err">Errors</button>
       </div>
     </div>
-    <div class="pane-body" data-id="maxim"><pre id="out-maxim" class="out"></pre></div>
+    <div class="pane-body" data-id="B"><pre id="out-B" class="out"></pre></div>
   </div>
 </section>
 
