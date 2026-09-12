@@ -24,6 +24,14 @@
       "tags": "https://unpkg.com/tree-sitter-fsharp@latest/queries/tags.scm"
     },
     {
+      "id": "ionide-wip",
+      "label": "ionide (local edits)",
+      "version": "main @ aefd0c8, 0.3.12 (2026-09-12)",
+      "wasm": "ionide-wip/parser.wasm",
+      "highlights": "ionide-wip/highlights.scm",
+      "tags": "ionide-wip/tags.scm"
+    },
+    {
       "id": "maxim-main",
       "label": "maxim",
       "version": "main @ 433ada2 (2026-09-02)",
@@ -31,6 +39,14 @@
       "wasm": "maxim-main/parser.wasm",
       "highlights": "maxim-main/highlights.scm",
       "tags": "maxim-main/tags.scm"
+    },
+    {
+      "id": "maxim-wip",
+      "label": "maxim (local edits)",
+      "version": "main @ 4a98a29 + parse fixes (2026-09-12)",
+      "wasm": "maxim-wip/parser.wasm",
+      "highlights": "maxim-wip/highlights.scm",
+      "tags": "maxim-wip/tags.scm"
     }
   ]
 }
