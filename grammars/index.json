@@ -8,8 +8,7 @@
     {
       "id": "ionide-main",
       "label": "ionide",
-      "version": "main @ 0d3ccbb (2026-08-07)",
-      "repo": "https://github.com/ionide/tree-sitter-fsharp",
+      "version": "main @ aefd0c8 = 0.3.12 (2026-09-12)",
       "wasm": "ionide-main/parser.wasm",
       "highlights": "ionide-main/highlights.scm",
       "tags": "ionide-main/tags.scm"
