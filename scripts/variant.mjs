@@ -25,18 +25,13 @@ import { execFileSync } from 'node:child_process';
 import fs from 'node:fs';
 import os from 'node:os';
 import path from 'node:path';
+import { ROOT, GRAMMARS, isUrl, readIndex, writeIndex, upsert } from './registry.mjs';
 
-const ROOT = path.resolve(import.meta.dirname, '..');
-const GRAMMARS = path.join(ROOT, 'grammars');
-const INDEX = path.join(GRAMMARS, 'index.json');
 const CACHE = path.join(ROOT, '.cache', 'repos');
 
 /* ------------------------------------------------------------------ util --- */
 
 const die = (msg) => { console.error('error: ' + msg); process.exit(1); };
-
-/** Manifest entries may be repo-relative paths or absolute URLs fetched at load time. */
-const isUrl = (s) => typeof s === 'string' && /^https?:\/\//i.test(s);
 
 /**
  * An id becomes a directory name under grammars/, so it must not be able to escape
@@ -85,24 +80,6 @@ function treeSitter(args, cwd) {
         `  Or point at an existing CLI:  TREE_SITTER=/path/to/tree-sitter`);
   const npx = process.platform === 'win32' ? 'npx.cmd' : 'npx';
   return run(npx, ['tree-sitter', ...args], { cwd, shell: process.platform === 'win32' });
-}
-
-function readIndex() {
-  if (!fs.existsSync(INDEX)) return { variants: [] };
-  return JSON.parse(fs.readFileSync(INDEX, 'utf8'));
-}
-
-function writeIndex(idx) {
-  idx.variants.sort((a, b) => a.id.localeCompare(b.id));
-  fs.writeFileSync(INDEX, JSON.stringify(idx, null, 2) + '\n');
-}
-
-function upsert(entry) {
-  const idx = readIndex();
-  const i = idx.variants.findIndex(v => v.id === entry.id);
-  if (i >= 0) idx.variants[i] = entry; else idx.variants.push(entry);
-  writeIndex(idx);
-  console.log(`${i >= 0 ? 'updated' : 'added'} variant "${entry.id}"`);
 }
 
 /** Copy a file in, returning its path relative to grammars/ for the manifest. */

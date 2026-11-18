@@ -1,10 +1,24 @@
 {
   "$comment": "Grammar variants. Paths are relative to this file; a value starting with http(s):// is fetched from that URL instead. Manage with: node scripts/variant.mjs",
   "default": [
-    "ionide-main",
-    "maxim-main"
+    "ionide-0.3.13",
+    "maxim-0.2.1"
   ],
   "variants": [
+    {
+      "id": "ionide-0.3.13",
+      "label": "ionide 0.3.13",
+      "version": "release 0.3.13 @ 12ed86c (2026-11-18)",
+      "repo": "https://github.com/ionide/tree-sitter-fsharp",
+      "release": {
+        "source": "ionide",
+        "tag": "0.3.13",
+        "published": "2026-11-18T16:57:54Z"
+      },
+      "wasm": "ionide-0.3.13/parser.wasm",
+      "highlights": "ionide-0.3.13/highlights.scm",
+      "tags": "ionide-0.3.13/tags.scm"
+    },
     {
       "id": "ionide-main",
       "label": "ionide",
@@ -29,6 +43,20 @@
       "wasm": "ionide-wip/parser.wasm",
       "highlights": "ionide-wip/highlights.scm",
       "tags": "ionide-wip/tags.scm"
+    },
+    {
+      "id": "maxim-0.2.1",
+      "label": "maxim 0.2.1",
+      "version": "release v0.2.1 @ 913bc9e (2026-09-15)",
+      "repo": "https://github.com/MangelMaxime/tree-sitter-fsharp",
+      "release": {
+        "source": "maxim",
+        "tag": "v0.2.1",
+        "published": "2026-09-15T19:05:28Z"
+      },
+      "wasm": "maxim-0.2.1/parser.wasm",
+      "highlights": "maxim-0.2.1/highlights.scm",
+      "tags": "maxim-0.2.1/tags.scm"
     },
     {
       "id": "maxim-main",

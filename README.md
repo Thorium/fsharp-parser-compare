@@ -63,6 +63,27 @@ node scripts/variant.mjs add --id wip --label "my branch" \
 node scripts/variant.mjs rm --id wip
 ```
 
+### Upstream releases
+
+```bash
+node scripts/refresh.mjs                         # releases newer than the newest registered
+node scripts/refresh.mjs --dry-run               # what would be added
+node scripts/refresh.mjs --source ionide --tag 0.3.12
+node scripts/refresh.mjs --all                   # every release with a wasm asset
+```
+
+Both repos attach `tree-sitter-fsharp.wasm` to their GitHub releases. `refresh.mjs`
+registers each new release as `ionide-<tag>` / `maxim-<tag>`: the release's own wasm
+plus `queries/highlights.scm` and `queries/tags.scm` at that tag. Each parser is loaded
+with this project's `web-tree-sitter` before it is registered, so one the page runtime
+would refuse never lands. `default` then points at the newest release of each repo;
+set `"pinDefault": true` in `index.json` to keep a hand-picked pair. The files are
+copied in rather than linked because GitHub release downloads carry no CORS header.
+
+`.github/workflows/refresh.yml` runs this daily (and on demand from the Actions tab) and
+commits what it adds to `main`. GitHub disables scheduled workflows after 60 days
+without repository activity; re-enable it from the Actions tab if that happens.
+
 `--subdir` is the grammar directory inside the repo (ionide keeps its grammar in
 `fsharp/`; MangelMaxime's is at the root, so it needs no `--subdir`). Queries are taken
 from `<subdir>/queries/` then `queries/`, or from `--queries <dir>`.
@@ -150,15 +171,16 @@ projects. Full licence texts are in [`licenses/`](licenses/).
 
 | Files here | From | Licence |
 |---|---|---|
-| `grammars/ionide-main/*` | [ionide/tree-sitter-fsharp](https://github.com/ionide/tree-sitter-fsharp) | MIT — © 2023 Nikolaj Sidorenco |
-| `grammars/maxim-main/*` | [MangelMaxime/tree-sitter-fsharp](https://github.com/MangelMaxime/tree-sitter-fsharp) | Apache-2.0 — © 2026 Mangel Maxime |
+| `grammars/ionide-*/*` | [ionide/tree-sitter-fsharp](https://github.com/ionide/tree-sitter-fsharp) | MIT — © 2023 Nikolaj Sidorenco |
+| `grammars/maxim-*/*` | [MangelMaxime/tree-sitter-fsharp](https://github.com/MangelMaxime/tree-sitter-fsharp) | Apache-2.0 — © 2026 Mangel Maxime |
 | `vendor/web-tree-sitter.*` | [tree-sitter/tree-sitter](https://github.com/tree-sitter/tree-sitter) | MIT — © 2018 Max Brunsfeld |
 
-The `.wasm` files are unmodified compilations of each project's committed grammar
-sources, produced with tree-sitter CLI 0.26.11; the `.scm` files are byte-for-byte
-copies of each project's `queries/highlights.scm` and `queries/tags.scm`. No upstream
-source was altered. Variants you add yourself carry their own upstream licence — record
+The `-main` `.wasm` files are unmodified compilations of each project's committed
+grammar sources, produced with tree-sitter CLI 0.26.11; the release variants
+(`ionide-<tag>`, `maxim-<tag>`) carry the `tree-sitter-fsharp.wasm` asset from that
+GitHub release unchanged. The `.scm` files are byte-for-byte copies of each project's
+`queries/highlights.scm` and `queries/tags.scm`. No upstream source was altered. Variants you add yourself carry their own upstream licence — record
 it here if you publish the result.
 
 Everything else in this repository (`index.html`, `app.js`, `worker.js`, `style.css`,
-`server.js`, `scripts/variant.mjs`, `samples/everyday.fs`) is original.
+`server.js`, `scripts/*.mjs`, `.github/workflows/*`, `samples/everyday.fs`) is original.
