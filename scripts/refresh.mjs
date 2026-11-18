@@ -1,9 +1,9 @@
 #!/usr/bin/env node
 // Register GitHub releases of the upstream grammars as variants in grammars/index.json.
 //
-//   node scripts/refresh.mjs                  releases newer than the newest one already
-//                                             registered for each repo (first run: the
-//                                             latest release only)
+//   node scripts/refresh.mjs                  the 2 newest releases of each repo, plus any
+//                                             release newer than the newest registered
+//   node scripts/refresh.mjs --latest 3       keep the 3 newest instead
 //   node scripts/refresh.mjs --all            every release that has a wasm asset
 //   node scripts/refresh.mjs --source ionide --tag 0.3.12
 //   node scripts/refresh.mjs --dry-run        list what would be added, change nothing
@@ -14,8 +14,8 @@
 // The files are copied in because GitHub release downloads carry no CORS header, so the
 // page cannot fetch them from GitHub at load time.
 //
-// Afterwards `default` points at the newest release of each source, unless index.json
-// has "pinDefault": true.
+// Older release variants already registered are kept. Afterwards `default` points at
+// the newest release of each source, unless index.json has "pinDefault": true.
 //
 // Set GITHUB_TOKEN (or GH_TOKEN) to lift the API limit of 60 requests an hour.
 
@@ -151,6 +151,9 @@ if (a.tag && !a.source) die('--tag needs --source (' + SOURCES.map(s => s.key).j
 const sources = a.source ? SOURCES.filter(s => s.key === a.source) : SOURCES;
 if (!sources.length) die(`unknown --source "${a.source}"`);
 
+const keep = a.latest === undefined ? 2 : Number(a.latest);
+if (!Number.isInteger(keep) || keep < 1) die(`--latest must be a positive whole number (got "${a.latest}")`);
+
 const idx = readIndex();
 const added = [];
 let failed = false;
@@ -165,8 +168,7 @@ for (const src of sources) {
     todo = rels.filter(r => r.tag === a.tag);
     if (!todo.length) die(`${src.repo} has no release "${a.tag}" with ${ASSET}`);
   } else if (a.all) todo = rels;
-  else if (newest) todo = rels.filter(r => r.published > newest);
-  else todo = rels.slice(0, 1);
+  else todo = rels.filter((r, i) => i < keep || (newest && r.published > newest));
 
   todo = todo.filter(r => a.force || a.tag || !idx.variants.some(v => v.id === variantId(src, r.tag)));
   if (!todo.length) { console.log(`${src.key}: up to date (${rels[0]?.tag ?? 'no releases'})`); continue; }

@@ -5,7 +5,7 @@ name: Refresh grammar releases
 
 on:
   schedule:
-    - cron: "23 5 * * *"
+    - cron: "23 5 * * 1"   # Mondays 05:23 UTC
   workflow_dispatch:
 
 permissions:

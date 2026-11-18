@@ -66,21 +66,23 @@ node scripts/variant.mjs rm --id wip
 ### Upstream releases
 
 ```bash
-node scripts/refresh.mjs                         # releases newer than the newest registered
+node scripts/refresh.mjs                         # the 2 newest releases of each repo
+node scripts/refresh.mjs --latest 3              # the 3 newest
 node scripts/refresh.mjs --dry-run               # what would be added
 node scripts/refresh.mjs --source ionide --tag 0.3.12
 node scripts/refresh.mjs --all                   # every release with a wasm asset
 ```
 
 Both repos attach `tree-sitter-fsharp.wasm` to their GitHub releases. `refresh.mjs`
-registers each new release as `ionide-<tag>` / `maxim-<tag>`: the release's own wasm
+makes sure the two newest releases of each repo are registered, as `ionide-<tag>` /
+`maxim-<tag>`, and keeps older ones already there. Each is the release's own wasm
 plus `queries/highlights.scm` and `queries/tags.scm` at that tag. Each parser is loaded
 with this project's `web-tree-sitter` before it is registered, so one the page runtime
 would refuse never lands. `default` then points at the newest release of each repo;
 set `"pinDefault": true` in `index.json` to keep a hand-picked pair. The files are
 copied in rather than linked because GitHub release downloads carry no CORS header.
 
-`.github/workflows/refresh.yml` runs this daily (and on demand from the Actions tab) and
+`.github/workflows/refresh.yml` runs this weekly on Mondays (and on demand from the Actions tab) and
 commits what it adds to `main`. GitHub disables scheduled workflows after 60 days
 without repository activity; re-enable it from the Actions tab if that happens.
 

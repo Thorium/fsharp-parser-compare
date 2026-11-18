@@ -6,6 +6,20 @@
   ],
   "variants": [
     {
+      "id": "ionide-0.3.12",
+      "label": "ionide 0.3.12",
+      "version": "release 0.3.12 @ aefd0c8 (2026-09-12)",
+      "repo": "https://github.com/ionide/tree-sitter-fsharp",
+      "release": {
+        "source": "ionide",
+        "tag": "0.3.12",
+        "published": "2026-09-12T14:23:26Z"
+      },
+      "wasm": "ionide-0.3.12/parser.wasm",
+      "highlights": "ionide-0.3.12/highlights.scm",
+      "tags": "ionide-0.3.12/tags.scm"
+    },
+    {
       "id": "ionide-0.3.13",
       "label": "ionide 0.3.13",
       "version": "release 0.3.13 @ 12ed86c (2026-11-18)",
@@ -43,6 +57,20 @@
       "wasm": "ionide-wip/parser.wasm",
       "highlights": "ionide-wip/highlights.scm",
       "tags": "ionide-wip/tags.scm"
+    },
+    {
+      "id": "maxim-0.2.0",
+      "label": "maxim 0.2.0",
+      "version": "release v0.2.0 @ bb60bc5 (2026-09-15)",
+      "repo": "https://github.com/MangelMaxime/tree-sitter-fsharp",
+      "release": {
+        "source": "maxim",
+        "tag": "v0.2.0",
+        "published": "2026-09-15T17:53:14Z"
+      },
+      "wasm": "maxim-0.2.0/parser.wasm",
+      "highlights": "maxim-0.2.0/highlights.scm",
+      "tags": "maxim-0.2.0/tags.scm"
     },
     {
       "id": "maxim-0.2.1",
