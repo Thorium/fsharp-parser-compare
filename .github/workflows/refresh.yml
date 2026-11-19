@@ -1,6 +1,7 @@
 name: Refresh grammar releases
 
-# Registers new ionide and MangelMaxime releases as variants (scripts/refresh.mjs)
+# Registers new ionide and MangelMaxime releases as variants, moves the -main
+# variants to the default branch's queries (scripts/refresh.mjs),
 # and commits them to main, which GitHub Pages serves.
 
 on:
@@ -36,15 +37,15 @@ jobs:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
 
       - name: Commit and push
-        if: steps.refresh.outputs.added != ''
+        if: steps.refresh.outputs.changed != ''
         env:
-          ADDED: ${{ steps.refresh.outputs.added }}
+          CHANGED: ${{ steps.refresh.outputs.changed }}
           GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
         run: |
           git config user.name "github-actions[bot]"
           git config user.email "41898341+github-actions[bot]@users.noreply.github.com"
-          git add grammars
-          git commit -m "Add grammar releases: $ADDED"
+          git add -A grammars
+          git commit -m "Update grammars: $CHANGED"
           git push
           # A branch-deployed Pages site may not rebuild for a GITHUB_TOKEN push.
           gh api -X POST "repos/$GITHUB_REPOSITORY/pages/builds" || true

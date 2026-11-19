@@ -16,8 +16,8 @@
         "published": "2026-09-12T14:23:26Z"
       },
       "wasm": "ionide-0.3.12/parser.wasm",
-      "highlights": "ionide-0.3.12/highlights.scm",
-      "tags": "ionide-0.3.12/tags.scm"
+      "highlights": "https://raw.githubusercontent.com/ionide/tree-sitter-fsharp/aefd0c8741bdf3aeb827a228aa4a996a6536697e/queries/highlights.scm",
+      "tags": "https://raw.githubusercontent.com/ionide/tree-sitter-fsharp/aefd0c8741bdf3aeb827a228aa4a996a6536697e/queries/tags.scm"
     },
     {
       "id": "ionide-0.3.13",
@@ -30,16 +30,22 @@
         "published": "2026-11-18T16:57:54Z"
       },
       "wasm": "ionide-0.3.13/parser.wasm",
-      "highlights": "ionide-0.3.13/highlights.scm",
-      "tags": "ionide-0.3.13/tags.scm"
+      "highlights": "https://raw.githubusercontent.com/ionide/tree-sitter-fsharp/12ed86cfef3ed8c7106a6e599dafe5de911d01b3/queries/highlights.scm",
+      "tags": "https://raw.githubusercontent.com/ionide/tree-sitter-fsharp/12ed86cfef3ed8c7106a6e599dafe5de911d01b3/queries/tags.scm"
     },
     {
       "id": "ionide-main",
-      "label": "ionide",
-      "version": "main @ aefd0c8 = 0.3.12 (2026-09-12)",
-      "wasm": "ionide-main/parser.wasm",
-      "highlights": "ionide-main/highlights.scm",
-      "tags": "ionide-main/tags.scm"
+      "label": "ionide main",
+      "version": "main @ a194128 (2026-11-19), ionide 0.3.13 parser",
+      "repo": "https://github.com/ionide/tree-sitter-fsharp",
+      "main": {
+        "source": "ionide",
+        "sha": "a19412828aec9150b8696cb6597396092b36336e",
+        "base": "ionide-0.3.13"
+      },
+      "wasm": "ionide-0.3.13/parser.wasm",
+      "highlights": "https://raw.githubusercontent.com/ionide/tree-sitter-fsharp/a19412828aec9150b8696cb6597396092b36336e/queries/highlights.scm",
+      "tags": "https://raw.githubusercontent.com/ionide/tree-sitter-fsharp/a19412828aec9150b8696cb6597396092b36336e/queries/tags.scm"
     },
     {
       "id": "ionide-npm-latest",
@@ -69,8 +75,8 @@
         "published": "2026-09-15T17:53:14Z"
       },
       "wasm": "maxim-0.2.0/parser.wasm",
-      "highlights": "maxim-0.2.0/highlights.scm",
-      "tags": "maxim-0.2.0/tags.scm"
+      "highlights": "https://raw.githubusercontent.com/MangelMaxime/tree-sitter-fsharp/bb60bc5a6d87862ff3ce80d55c99a49d96b3fed3/queries/highlights.scm",
+      "tags": "https://raw.githubusercontent.com/MangelMaxime/tree-sitter-fsharp/bb60bc5a6d87862ff3ce80d55c99a49d96b3fed3/queries/tags.scm"
     },
     {
       "id": "maxim-0.2.1",
@@ -83,17 +89,22 @@
         "published": "2026-09-15T19:05:28Z"
       },
       "wasm": "maxim-0.2.1/parser.wasm",
-      "highlights": "maxim-0.2.1/highlights.scm",
-      "tags": "maxim-0.2.1/tags.scm"
+      "highlights": "https://raw.githubusercontent.com/MangelMaxime/tree-sitter-fsharp/913bc9e78c6cb66642f49c794579aecd9a36868c/queries/highlights.scm",
+      "tags": "https://raw.githubusercontent.com/MangelMaxime/tree-sitter-fsharp/913bc9e78c6cb66642f49c794579aecd9a36868c/queries/tags.scm"
     },
     {
       "id": "maxim-main",
-      "label": "maxim",
-      "version": "main @ 433ada2 (2026-09-02)",
+      "label": "maxim main",
+      "version": "main @ 6403a1c (2026-10-06), maxim 0.2.1 parser",
       "repo": "https://github.com/MangelMaxime/tree-sitter-fsharp",
-      "wasm": "maxim-main/parser.wasm",
-      "highlights": "maxim-main/highlights.scm",
-      "tags": "maxim-main/tags.scm"
+      "main": {
+        "source": "maxim",
+        "sha": "6403a1cb5fad2162c4fb56bf5d5273a4348c25f3",
+        "base": "maxim-0.2.1"
+      },
+      "wasm": "maxim-0.2.1/parser.wasm",
+      "highlights": "https://raw.githubusercontent.com/MangelMaxime/tree-sitter-fsharp/6403a1cb5fad2162c4fb56bf5d5273a4348c25f3/queries/highlights.scm",
+      "tags": "https://raw.githubusercontent.com/MangelMaxime/tree-sitter-fsharp/6403a1cb5fad2162c4fb56bf5d5273a4348c25f3/queries/tags.scm"
     },
     {
       "id": "maxim-wip",

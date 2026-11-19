@@ -76,14 +76,27 @@ node scripts/refresh.mjs --all                   # every release with a wasm ass
 Both repos attach `tree-sitter-fsharp.wasm` to their GitHub releases. `refresh.mjs`
 makes sure the two newest releases of each repo are registered, as `ionide-<tag>` /
 `maxim-<tag>`, and keeps older ones already there. Each is the release's own wasm
-plus `queries/highlights.scm` and `queries/tags.scm` at that tag. Each parser is loaded
-with this project's `web-tree-sitter` before it is registered, so one the page runtime
-would refuse never lands. `default` then points at the newest release of each repo;
-set `"pinDefault": true` in `index.json` to keep a hand-picked pair. The files are
-copied in rather than linked because GitHub release downloads carry no CORS header.
+plus links to `queries/highlights.scm` and `queries/tags.scm` on raw.githubusercontent.com,
+pinned to the tag's full commit sha. Each parser is loaded with this project's
+`web-tree-sitter` before it is registered, so one the page runtime would refuse never
+lands. `default` then points at the newest release of each repo; set `"pinDefault": true`
+in `index.json` to keep a hand-picked pair.
 
-`.github/workflows/refresh.yml` runs this weekly on Mondays (and on demand from the Actions tab) and
-commits what it adds to `main`. GitHub disables scheduled workflows after 60 days
+Only the wasm is copied in: GitHub release downloads carry no CORS header, so the page
+cannot fetch them. raw.githubusercontent.com does send `Access-Control-Allow-Origin: *`,
+so the queries are fetched from upstream at load time and the page needs to be online
+to colour anything.
+
+`ionide-main` and `maxim-main` follow each repo's default branch: the newest release's
+wasm plus the branch head's queries. That holds while no grammar file (`grammar.js`,
+`src/`, `common/`) has changed since the release; query, test, CI and docs commits
+are fine. Once the grammar has changed, `refresh.mjs` leaves the variant as it is and
+prints a warning with the `variant.mjs build` command that rebuilds it. `--no-main`
+skips this step. `variant.mjs rm` refuses to delete a release whose wasm a `-main`
+variant still uses.
+
+`.github/workflows/refresh.yml` runs this weekly on Mondays (and on demand from the
+Actions tab) and commits what it changes to `main`. GitHub disables scheduled workflows after 60 days
 without repository activity; re-enable it from the Actions tab if that happens.
 
 `--subdir` is the grammar directory inside the repo (ionide keeps its grammar in
@@ -100,18 +113,20 @@ refused at load time with an ABI error). Override it with `$TREE_SITTER` if you 
 
 ```json
 {
-  "default": ["ionide-main", "maxim-main"],
+  "default": ["ionide-0.3.13", "maxim-0.2.1"],
   "variants": [
-    { "id": "ionide-main", "label": "ionide", "version": "main @ 0d3ccbb",
-      "wasm": "ionide-main/parser.wasm",
-      "highlights": "ionide-main/highlights.scm",
-      "tags": "ionide-main/tags.scm" }
+    { "id": "ionide-0.3.13", "label": "ionide 0.3.13", "version": "release 0.3.13 @ 12ed86c",
+      "wasm": "ionide-0.3.13/parser.wasm",
+      "highlights": "https://raw.githubusercontent.com/ionide/tree-sitter-fsharp/<sha>/queries/highlights.scm",
+      "tags": "https://raw.githubusercontent.com/ionide/tree-sitter-fsharp/<sha>/queries/tags.scm" }
   ]
 }
 ```
 
 Paths are relative to `grammars/`. **A value starting with `http://` or `https://` is
-fetched from there instead**, which is how the shipped `ionide-npm-latest` variant
+fetched from there instead.** Upstream queries are linked this way rather than copied.
+Two variants can share one wasm: each `-main` variant points at its newest release's
+`parser.wasm`. The shipped `ionide-npm-latest` variant
 tracks whatever ionide has published without costing this repo a byte:
 
 ```json
@@ -177,12 +192,12 @@ projects. Full licence texts are in [`licenses/`](licenses/).
 | `grammars/maxim-*/*` | [MangelMaxime/tree-sitter-fsharp](https://github.com/MangelMaxime/tree-sitter-fsharp) | Apache-2.0 — © 2026 Mangel Maxime |
 | `vendor/web-tree-sitter.*` | [tree-sitter/tree-sitter](https://github.com/tree-sitter/tree-sitter) | MIT — © 2018 Max Brunsfeld |
 
-The `-main` `.wasm` files are unmodified compilations of each project's committed
-grammar sources, produced with tree-sitter CLI 0.26.11; the release variants
-(`ionide-<tag>`, `maxim-<tag>`) carry the `tree-sitter-fsharp.wasm` asset from that
-GitHub release unchanged. The `.scm` files are byte-for-byte copies of each project's
-`queries/highlights.scm` and `queries/tags.scm`. No upstream source was altered. Variants you add yourself carry their own upstream licence — record
-it here if you publish the result.
+The release variants (`ionide-<tag>`, `maxim-<tag>`) carry the `tree-sitter-fsharp.wasm`
+asset from that GitHub release unchanged; a `-main` variant built with `variant.mjs build`
+is an unmodified compilation of that project's committed grammar sources. Upstream `.scm` files are not stored here; they are linked
+at a fixed commit. The `-wip` variants hold local edits. No upstream source was altered.
+Variants you add yourself carry their own upstream licence — record it here if you
+publish the result.
 
 Everything else in this repository (`index.html`, `app.js`, `worker.js`, `style.css`,
 `server.js`, `scripts/*.mjs`, `.github/workflows/*`, `samples/everyday.fs`) is original.

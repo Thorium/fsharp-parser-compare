@@ -10,12 +10,17 @@
 //   node scripts/refresh.mjs --prerelease     include pre-releases
 //
 // Each release becomes `<source>-<tag>` (leading "v" dropped): the release's own
-// tree-sitter-fsharp.wasm plus queries/highlights.scm and queries/tags.scm at that tag.
-// The files are copied in because GitHub release downloads carry no CORS header, so the
-// page cannot fetch them from GitHub at load time.
+// tree-sitter-fsharp.wasm, copied in because GitHub release downloads carry no CORS
+// header, plus raw.githubusercontent.com links to queries/highlights.scm and
+// queries/tags.scm at the tag's commit sha, which the page fetches at load time.
 //
 // Older release variants already registered are kept. Afterwards `default` points at
 // the newest release of each source, unless index.json has "pinDefault": true.
+//
+// `<source>-main` follows the default branch: the newest release's wasm plus the
+// branch head's queries, while no grammar file has changed since that release. Once
+// one has, it is left as it is with a warning, and needs `variant.mjs build`.
+// --no-main skips this.
 //
 // Set GITHUB_TOKEN (or GH_TOKEN) to lift the API limit of 60 requests an hour.
 
@@ -75,6 +80,9 @@ async function releases(src, withPre) {
 
 const variantId = (src, tag) => `${src.key}-${tag.replace(/^v/, '')}`;
 
+/** Pinned to the full commit sha, so the file can never change under the variant. */
+const rawQuery = (repo, sha, q) => `https://raw.githubusercontent.com/${repo}/${sha}/queries/${q}.scm`;
+
 /* ---------------------------------------------------------------- verify --- */
 
 let runtime;
@@ -92,15 +100,88 @@ async function verify(wasm, queries) {
     if (runtime) await runtime.Parser.init();
     else console.warn('  note: node_modules/web-tree-sitter missing (npm ci); skipping load check');
   }
-  if (!runtime) return;
+  if (!runtime) return [];
   const lang = await runtime.Language.load(wasm);
   const parser = new runtime.Parser();
   parser.setLanguage(lang);
   parser.parse(fs.readFileSync(path.join(ROOT, 'samples', 'everyday.fs'), 'utf8'));
+  const bad = [];
   for (const [name, text] of Object.entries(queries)) {
     try { new runtime.Query(lang, text); }
-    catch (e) { console.warn(`  warning: ${name}.scm does not compile: ${e.message}`); }
+    catch (e) { bad.push(name); console.warn(`  warning: ${name}.scm does not compile: ${e.message}`); }
   }
+  return bad;
+}
+
+/* -------------------------------------------------------- default branch --- */
+
+// Files whose change alters the parser. Anything else (queries, tests, CI, docs,
+// bindings, package metadata) leaves the newest release's wasm valid for main.
+const touchesGrammar = f => !f.startsWith('bindings/') && /(^|\/)(grammar\.js$|src\/|common\/)/.test(f);
+
+const newestRelease = (idx, key) => idx.variants
+  .filter(v => v.release?.source === key)
+  .sort((x, y) => y.release.published.localeCompare(x.release.published))[0];
+
+const warn = (msg) => console.warn(process.env.GITHUB_ACTIONS ? `::warning::${msg}` : `  warning: ${msg}`);
+
+/**
+ * Point `<source>-main` at the default branch: the newest release's wasm plus the
+ * branch head's queries, as long as no grammar file changed since that release.
+ * When one did, the variant is left as it is; it needs a build (variant.mjs build).
+ * Returns the variant id when it changed.
+ */
+async function trackMain(src, idx, dry) {
+  const base = newestRelease(idx, src.key);
+  if (!base) return null;
+  const id = `${src.key}-main`;
+  const { default_branch: branch } = await api(`repos/${src.repo}`);
+  const head = await api(`repos/${src.repo}/commits/${encodeURIComponent(branch)}`);
+  const sha = head.sha, short = sha.slice(0, 7);
+  const current = idx.variants.find(v => v.id === id);
+  if (current?.main?.sha === sha && current.main.base === base.id) {
+    console.log(`${id}: up to date (${branch} @ ${short})`);
+    return null;
+  }
+
+  const cmp = await api(`repos/${src.repo}/compare/${encodeURIComponent(base.release.tag)}...${sha}`);
+  const grammar = cmp.files.length >= 300 ? ['(over 300 files changed)'] : cmp.files.map(f => f.filename).filter(touchesGrammar);
+  if (grammar.length) {
+    warn(`${id}: ${branch} @ ${short} changes the grammar since ${base.release.tag} ` +
+         `(${grammar.slice(0, 5).join(', ')}${grammar.length > 5 ? ', …' : ''}); left as is. ` +
+         `Build it with: node scripts/variant.mjs build --id ${id} --repo https://github.com/${src.repo}`);
+    return null;
+  }
+  if (dry) { console.log(`${id}: would point at ${branch} @ ${short} with the ${base.id} parser`); return null; }
+
+  const queries = {};
+  for (const q of QUERIES) {
+    try { queries[q] = (await download(rawQuery(src.repo, sha, q))).toString('utf8'); }
+    catch { console.warn(`  note: no queries/${q}.scm at ${branch} @ ${short}`); }
+  }
+  const bad = await verify(fs.readFileSync(path.join(GRAMMARS, base.wasm)), queries);
+  if (bad.length) { warn(`${id}: ${bad.join(', ')}.scm at ${short} does not compile against ${base.id}; left as is`); return null; }
+
+  const entry = {
+    id,
+    label: `${src.label} main`,
+    version: `${branch} @ ${short} (${head.commit.committer.date.slice(0, 10)}), ${base.label} parser`,
+    repo: `https://github.com/${src.repo}`,
+    main: { source: src.key, sha, base: base.id },
+    wasm: base.wasm,
+  };
+  for (const q of Object.keys(queries)) entry[q] = rawQuery(src.repo, sha, q);
+  const i = idx.variants.findIndex(v => v.id === id);
+  if (i >= 0) idx.variants[i] = entry; else idx.variants.push(entry);
+  console.log(`  ${id} — ${entry.version}`);
+  return id;
+}
+
+/** Remove grammars/<id>/ once no variant points into it (e.g. a superseded main build). */
+function dropUnused(idx, id) {
+  const dir = path.join(GRAMMARS, id);
+  const used = idx.variants.some(v => ['wasm', ...QUERIES].some(k => v[k]?.startsWith(`${id}/`)));
+  if (!used && fs.existsSync(dir)) { fs.rmSync(dir, { recursive: true, force: true }); console.log(`  removed unused grammars/${id}/`); }
 }
 
 /* ------------------------------------------------------------------ main --- */
@@ -119,8 +200,8 @@ async function fetchRelease(src, rel) {
   }
   await verify(wasm, queries);
 
-  const sha = (await api(`repos/${src.repo}/commits/${encodeURIComponent(rel.tag)}`,
-    'application/vnd.github.sha')).slice(0, 7);
+  const sha = await api(`repos/${src.repo}/commits/${encodeURIComponent(rel.tag)}`,
+    'application/vnd.github.sha');
 
   const dir = path.join(GRAMMARS, id);
   fs.rmSync(dir, { recursive: true, force: true });
@@ -129,15 +210,12 @@ async function fetchRelease(src, rel) {
   const entry = {
     id,
     label: `${src.label} ${rel.tag.replace(/^v/, '')}`,
-    version: `release ${rel.tag} @ ${sha} (${rel.published.slice(0, 10)})`,
+    version: `release ${rel.tag} @ ${sha.slice(0, 7)} (${rel.published.slice(0, 10)})`,
     repo: `https://github.com/${src.repo}`,
     release: { source: src.key, tag: rel.tag, published: rel.published },
     wasm: `${id}/parser.wasm`,
   };
-  for (const [q, text] of Object.entries(queries)) {
-    fs.writeFileSync(path.join(dir, `${q}.scm`), text);
-    entry[q] = `${id}/${q}.scm`;
-  }
+  for (const q of Object.keys(queries)) entry[q] = rawQuery(src.repo, sha, q);
   return entry;
 }
 
@@ -155,7 +233,7 @@ const keep = a.latest === undefined ? 2 : Number(a.latest);
 if (!Number.isInteger(keep) || keep < 1) die(`--latest must be a positive whole number (got "${a.latest}")`);
 
 const idx = readIndex();
-const added = [];
+const changed = [];
 let failed = false;
 
 for (const src of sources) {
@@ -171,7 +249,7 @@ for (const src of sources) {
   else todo = rels.filter((r, i) => i < keep || (newest && r.published > newest));
 
   todo = todo.filter(r => a.force || a.tag || !idx.variants.some(v => v.id === variantId(src, r.tag)));
-  if (!todo.length) { console.log(`${src.key}: up to date (${rels[0]?.tag ?? 'no releases'})`); continue; }
+  if (!todo.length) console.log(`${src.key}: up to date (${rels[0]?.tag ?? 'no releases'})`);
 
   for (const rel of todo.reverse()) {
     const id = variantId(src, rel.tag);
@@ -181,7 +259,7 @@ for (const src of sources) {
       const entry = await fetchRelease(src, rel);
       const i = idx.variants.findIndex(v => v.id === id);
       if (i >= 0) idx.variants[i] = entry; else idx.variants.push(entry);
-      added.push(id);
+      changed.push(id);
       console.log(`  added ${id} — ${entry.version}`);
     } catch (e) {
       failed = true;
@@ -189,19 +267,22 @@ for (const src of sources) {
       console.error(`  error: ${id}: ${e.message}`);
     }
   }
+
+  if (!a.tag && !a['no-main']) {
+    const id = await trackMain(src, idx, a['dry-run']);
+    if (id) { changed.push(id); dropUnused(idx, id); }
+  }
 }
 
 if (!a['dry-run']) {
   if (!idx.pinDefault) {
-    const latest = SOURCES.map(s => idx.variants
-      .filter(v => v.release?.source === s.key)
-      .sort((x, y) => y.release.published.localeCompare(x.release.published))[0]?.id);
+    const latest = SOURCES.map(s => newestRelease(idx, s.key)?.id);
     if (latest.every(Boolean) && String(latest) !== String(idx.default)) {
       idx.default = latest;
       console.log(`default: ${latest.join(' vs ')}`);
     }
   }
   writeIndex(idx);
-  if (process.env.GITHUB_OUTPUT) fs.appendFileSync(process.env.GITHUB_OUTPUT, `added=${added.join(' ')}\n`);
+  if (process.env.GITHUB_OUTPUT) fs.appendFileSync(process.env.GITHUB_OUTPUT, `changed=${changed.join(' ')}\n`);
 }
 process.exit(failed ? 1 : 0);

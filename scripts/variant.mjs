@@ -194,6 +194,10 @@ function cmdRm(a) {
   const before = idx.variants.length;
   idx.variants = idx.variants.filter(v => v.id !== a.id);
   if (idx.variants.length === before) die(`no variant "${a.id}"`);
+  // A -main variant can borrow a release's wasm; deleting the folder would break it.
+  const users = idx.variants.filter(v =>
+    ['wasm', 'highlights', 'tags'].some(k => typeof v[k] === 'string' && v[k].startsWith(`${a.id}/`)));
+  if (users.length) die(`grammars/${a.id}/ is also used by ${users.map(v => v.id).join(', ')}; remove or rebuild those first`);
   writeIndex(idx);
   fs.rmSync(path.join(GRAMMARS, a.id), { recursive: true, force: true });
   console.log(`removed variant "${a.id}"`);
